@@ -53,29 +53,63 @@ def error_syndrome(stabList, error):
     
     return error_synd.astype(int)
 
+
+def dump_chunk_errors(errorList, iterat):
+    with open("{iterat}_error.p".format(iterat=str(iterat)), 'wb') as fp:
+        pickle.dump(errorList, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        
+def load_chunk_errors(iterat):
+    with open("{iterat}_error.p".format(iterat=str(iterat)), 'rb') as fp:
+        chunkErrors = pickle.load(fp)
+    return chunkErrors
+
 def classify_errors(stabList):
     """
     Input: stabilizerList
     Output: (dict) with key syndrome and value list of all posible errors in symplectic form
     """
     class_errors = {}
-    symplectic_matrix = symplectic_stabilizer(stabList)
+    try:
+        symplectic_matrix = symplectic_stabilizer(stabList)
+    except:
+        print("Error convirtiendo a symplectic")
     
     numQubits = symplectic_matrix[0].shape[1]
     numStabilizers = symplectic_matrix[0].shape[0]
     
-    for error in itertools.product([0,1], repeat=numStabilizers):
+    perm1 = itertools.product([0,1], repeat=numStabilizers)
+
+    for error in perm1:
         class_errors[tuple(error)] = []
     
-    oneError = [np.array(i) for i in itertools.product([0, 1], repeat=numQubits)]
-    errors = [[x,y] for x,y in itertools.product(oneError, oneError)]
-    
-    for error in errors:
-        syndrome = error_syndrome(symplectic_matrix, error)
-        class_errors[tuple(syndrome)].append(error)
+    perm2 = itertools.product([0, 1], repeat=numQubits)
+    oneError = []
+    for i in perm2:
+        oneError.append(np.array(i))
+        
+    errors = []
+    perm3 = itertools.product(oneError, oneError)
+    iteration = 0
+    for x,y in perm3:
+        errors.append([x,y])
+        if len(errors)>=50000:
+            iteration+=1
+            dump_chunk_errors(errors, iteration)
+            errors = []
+                        
+    while iteration>=0:
+        
+        for error in errors:
+            syndrome = error_syndrome(symplectic_matrix, error)
 
-    
+            class_errors[tuple(syndrome)].append(error)
+
+        if iteration!=0:
+            errors = load_chunk_errors(iteration)
+        iteration-=1
+
     return class_errors
+    
     
 
 def classify_errors_weight(stabList, weight):
@@ -203,10 +237,32 @@ def open_syndromes(nombreArchivo):
     Output: error syndrome and minimum weight errors
     """
     with open("{fnombre}_AllErrors.p".format(fnombre=str(nombreArchivo)), 'rb') as fp:
-        all_errors = pickle.load(fp)
-        
+        all_errors = pickle.load(fp)    
     with open("{fnombre}_MinWeightErrors.p".format(fnombre=str(nombreArchivo)), 'rb') as fp2:
         minWeight_errors = pickle.load(fp2)
     return all_errors, minWeight_errors
 
+
+def fidelity(minWeightErrors, probX = 1/3, probY = 1/3, probZ = 1/3):
+    """
+    Input: dictionary of minWeightErrors
+    Output: calculates fidelity of state after error correction on channel (1- probX - probY - probZ) I + probX (X rho X) + probY (Y rho Y)     probZ (Z rho Z)
+    """
+    probI = 1 - (probX + probY + probZ) 
+    fid = 0
+    for error in minWeightErrors:
+        if len(minWeightErrors[error])==1:
+            probFix = 1
+            x,z = minWeightErrors[error][0]        
+            for qubit in range(x.shape[0]):
+                if x[qubit]==0 and z[qubit]==0:
+                    probFix = probFix*probI
+                elif x[qubit]==1 and z[qubit]==0:
+                    probFix = probFix*probX
+                elif x[qubit]==0 and z[qubit]==1:
+                    probFix = probFix*probZ
+                elif x[qubit]==1 and z[qubit]==1:
+                    probFix = probFix*probY
+            fid += probFix
+    return fid
 
