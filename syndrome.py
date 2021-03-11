@@ -273,6 +273,17 @@ def fidelity(minWeightErrors, probX = 1/3, probY = 1/3, probZ = 1/3):
             fid += probFix
     return fid
 
+def probability_threshold(minWeightErrors, epsilon = 0.001):
+    numSteps =int( 1//(2*epsilon) + 1 )
+    fidel = [fidelity(minWeightErrors, p/3, p/3, p/3) for p in np.linspace(0,1,numSteps)]
+    whenOver = np.where(fidel>1-np.linspace(0,1,numSteps), np.linspace(0,1,numSteps), np.zeros(numSteps))
+    
+    maxprob = 0
+    for prob in whenOver:
+        if prob > maxprob:
+            maxprob = prob
+    return maxprob + epsilon
+
 def save_syndromes(nombreArchivo, errorSyndrome) -> None:
     """
     Input: (str, errorSyndrome) saves syndrome in three files, min weights, allErrors and properties
