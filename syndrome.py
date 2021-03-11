@@ -111,7 +111,7 @@ def minimum_weight_error(errors):
     minWeight = {}
     for syndr in errors:
         minW = errors[syndr][0][0].shape[0]
-        detected = 0
+        detected = []
         for error in errors[syndr]:
             x,y = error
             #weight of error

@@ -63,7 +63,7 @@ def load_chunk_errors(iterat):
         chunkErrors = pickle.load(fp)
     return chunkErrors
 
-def classify_errors(stabList):
+def classify_errors(stabList, chunkSize = 50000):
     """
     Input: stabilizerList
     Output: (dict) with key syndrome and value list of all posible errors in symplectic form
@@ -92,7 +92,7 @@ def classify_errors(stabList):
     iteration = 0
     for x,y in perm3:
         errors.append([x,y])
-        if len(errors)>=50000:
+        if len(errors)>=chunkSize:
             iteration+=1
             dump_chunk_errors(errors, iteration)
             errors = []
@@ -145,7 +145,7 @@ def minimum_weight_error(errors):
     minWeight = {}
     for syndr in errors:
         minW = errors[syndr][0][0].shape[0]
-        detected = 0
+        detected = []
         for error in errors[syndr]:
             x,y = error
             #weight of error
