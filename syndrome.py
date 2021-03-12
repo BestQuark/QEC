@@ -130,7 +130,7 @@ def classify_errors_chunks(stabList,  chunkSize = 50000):
 
     return class_errors
 
-def classify_errors_weight(stabList, weights):
+def classify_errors_weight_old(stabList, weights):
     """
     Input: stabilizerList
     Output: (dict) with key syndrome and value list of all posible errors in symplectic form
@@ -153,6 +153,50 @@ def classify_errors_weight(stabList, weights):
             class_errors[tuple(syndrome)].append(error)
 
     return class_errors
+
+
+def kbits(n, k):
+    """
+    Retrieved from https://stackoverflow.com/a/58072652
+    """
+    limit=1<<n
+    val=(1<<k)-1
+    while val<limit:
+        yield "{0:0{1}b}".format(val,n)
+        minbit=val&-val #rightmost 1 bit
+        fillbit = (val+minbit)&~val  #rightmost 0 to the left of that bit
+        val = val+minbit | (fillbit//(minbit<<1))-1
+
+def classify_errors_weight(stabList, weights):
+    """
+    Input: stabilizerList
+    Output: (dict) with key syndrome and value list of all posible errors in symplectic form
+    """
+    class_errors = {}
+    symplectic_matrix = symplectic_stabilizer(stabList)
+    
+    numQubits = symplectic_matrix[0].shape[1]
+    numStabilizers = symplectic_matrix[0].shape[0]
+    
+    for error in itertools.product([0,1], repeat=numStabilizers):
+        class_errors[tuple(error)] = []
+    
+    for weight in weights:
+        errors = []
+        if weight!=0:
+            error_generator = kbits(2*numQubits,weight)
+            for s in error_generator:
+                err = np.fromiter(s, dtype=int)
+                errors.append(np.array_split(err,2))
+
+        elif weight==0:
+            errors.append([np.zeros(numQubits), np.zeros(numQubits)])
+            
+        for error in errors:
+            syndrome = error_syndrome(symplectic_matrix, error)
+            class_errors[tuple(syndrome)].append(error)
+    return class_errors
+    
     
     
 def classify_errors(stabList, chunkSize = 0, weights = []):
