@@ -2,6 +2,11 @@ from tkinter import *
 import syndrome as syn
 import os
 
+"""
+GUI that uses syndrome.py to calculate errors associated to error syndromes of different stabilizer codes
+Author: @BestQuark
+"""
+
 os.system('clear')
 
 def calculateErrors():
@@ -30,21 +35,45 @@ def calculateErrors():
         else:
             ccc = " - ".join(txt[err])
         errsList.insert(END, str(indx+1)+')     '+ ccc)
-       
+        
+def exampleSelected(event):
+    if exampleClicked.get()==stabExamples[0]:
+        syndromeTextbox.delete(0, END)
+        syndromeTextbox.insert(0, "XXXXIII;XXIXXII;XIXIXII;ZZZZIII; ZZIZZII; ZIZIZII")
+        
+    elif exampleClicked.get()==stabExamples[1]:
+        syndromeTextbox.delete(0, END)
+        syndromeTextbox.insert(0, "IZXXZ; ZIZXX; XZIZX; XXZIZ")
+        
+    elif exampleClicked.get()==stabExamples[2]:
+        syndromeTextbox.delete(0, END)
+        syndromeTextbox.insert(0, "XXI;IXX")  
     
-    
+    exampleClicked.set("Examples")
 
+    
 root = Tk()
 
 root.title("Syndrome QEC")
-root.geometry('650x450')
+root.iconbitmap("iconAtom.ico")
+root.geometry('700x450')
 root.configure(background='white')
+
+
+stabExamples = ["Steane code", "5 qubit code", "Repetition code"]
+
+exampleClicked = StringVar()
+exampleClicked.set("Examples")
+
+drop = OptionMenu(root, exampleClicked, *stabExamples, command=exampleSelected)
+drop.configure(font=("Times New Roman", 12), bg='blue', fg='white')
+drop.grid(row=5, column=2, sticky="ew")
 
 appTitle = Label(root, text='Syndrome Calculator')
 appTitle.grid(row=0, column=1, pady=10)
 appTitle.configure(font=("Times New Roman", 25, "bold"), bg='white')
 
-instructionsLb = Label(root, text = 'To calculate Pauli errors associated with an error syndrome, enter the stabilizer of the code as \n "S1; S2; S3; ... ; Sn" where Si is a string of Pauli matrices. Eg: XXX;ZZY; IIZ ')
+instructionsLb = Label(root, text = 'To calculate Pauli errors associated with an error syndrome, enter the stabilizer of the code as \n "S1; S2; S3; ... ; Sn" where Si is a product of Pauli matrices. ')
 instructionsLb.grid(row=1, column=0, columnspan = 2, rowspan=3, pady=15)
 instructionsLb.configure(font=("Times New Roman", 12), bg='white')
 

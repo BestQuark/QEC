@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import itertools
 import pickle
 
+"""
+Syndrome library
+Author: @BestQuark
+"""
+
 def symplectic_stabilizer(stabList):
     """
     Input: (str) list of stabilizers in the form "XXI;IXX;XXX"
